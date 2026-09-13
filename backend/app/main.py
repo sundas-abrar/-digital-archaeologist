@@ -1,3 +1,4 @@
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -19,12 +20,17 @@ app = FastAPI(
 )
 
 # Allow the Next.js dev server to call this API from the browser.
+# Localhost origins always allowed (local dev). Add production frontend
+# URLs via ALLOWED_ORIGINS in .env, comma-separated, e.g.:
+# ALLOWED_ORIGINS=https://your-app.vercel.app,https://your-custom-domain.com
+_default_origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+_extra_origins = [
+    o.strip() for o in os.getenv("ALLOWED_ORIGINS", "").split(",") if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=_default_origins + _extra_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
