@@ -14,6 +14,7 @@ import {
   MessageSquare,
   Compass,
   FlaskConical,
+  Bot,
 } from "lucide-react";
 import { API_BASE, type FileTreeNode, type ScanSummary } from "@/lib/api";
 import FileTree from "@/components/FileTree";
@@ -24,9 +25,11 @@ import OverviewPanel from "@/components/OverviewPanel";
 import FeedbackForm from "@/components/FeedbackForm";
 import InvestigationPanel from "@/components/InvestigationPanel";
 import QAPanel from "@/components/QAPanel";
+import AgentPanel from "@/components/AgentPanel";
 
 const TABS = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "agent", label: "Agent Mode", icon: Bot },
   { id: "investigation", label: "Investigation", icon: Compass },
   { id: "timeline", label: "Timeline", icon: Clock },
   { id: "evolution", label: "Code Evolution", icon: Code2 },
@@ -37,6 +40,7 @@ const TABS = [
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
+
 
 function EmptyState({ label }: { label: string }) {
   return (
@@ -130,6 +134,8 @@ function DashboardBody() {
             onNavigate={setActive}
           />
         )}
+
+        {active === "agent" && <AgentPanel sessionId={sessionId} />}
 
         {active === "investigation" && (
           <InvestigationPanel sessionId={sessionId} summary={summary} />

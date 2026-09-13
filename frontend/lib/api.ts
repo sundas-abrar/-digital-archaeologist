@@ -1,5 +1,23 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+// Attaches the site-gate password (see middleware.ts / app/gate) as a
+// header when one is set, so the backend's own password check (see
+// backend/app/security.py) passes too. With no password cookie set
+// (e.g. local dev without SITE_PASSWORD configured), this behaves
+// exactly like a plain fetch() call \u2014 nothing else changes.
+function authFetch(input: string, init: RequestInit = {}): Promise<Response> {
+  const password =
+    typeof document !== "undefined"
+      ? document.cookie.match(/(?:^|; )site_auth=([^;]*)/)?.[1]
+      : undefined;
+
+  if (!password) return fetch(input, init);
+
+  const headers = new Headers(init.headers || {});
+  headers.set("X-Site-Password", decodeURIComponent(password));
+  return fetch(input, { ...init, headers });
+}
+
 export type HealthStatus = {
   ok: boolean;
   status?: string;
@@ -8,7 +26,7 @@ export type HealthStatus = {
 
 export async function checkHealth(): Promise<HealthStatus> {
   try {
-    const res = await fetch(`${API_BASE}/api/health`, {
+    const res = await authFetch(`${API_BASE}/api/health`, {
       cache: "no-store",
     });
 
@@ -61,7 +79,7 @@ export async function uploadFiles(
   files.forEach((f) => formData.append("files", f));
 
   try {
-    const res = await fetch(`${API_BASE}/api/upload`, {
+    const res = await authFetch(`${API_BASE}/api/upload`, {
       method: "POST",
       body: formData,
     });
@@ -124,7 +142,7 @@ export async function scanSession(
   sessionId: string
 ): Promise<DeepScanResult | UploadError> {
   try {
-    const res = await fetch(`${API_BASE}/api/scan/${sessionId}`);
+    const res = await authFetch(`${API_BASE}/api/scan/${sessionId}`);
     const data = await res.json();
 
     if (!res.ok) {
@@ -165,7 +183,7 @@ export async function getFindings(
   sessionId: string
 ): Promise<FindingsResult | UploadError> {
   try {
-    const res = await fetch(`${API_BASE}/api/findings/${sessionId}`);
+    const res = await authFetch(`${API_BASE}/api/findings/${sessionId}`);
     const data = await res.json();
 
     if (!res.ok) {
@@ -194,7 +212,7 @@ export async function getInterpretation(
   sessionId: string
 ): Promise<AIInterpretation | UploadError> {
   try {
-    const res = await fetch(`${API_BASE}/api/interpret/${sessionId}`);
+    const res = await authFetch(`${API_BASE}/api/interpret/${sessionId}`);
     const data = await res.json();
 
     if (!res.ok) {
@@ -222,7 +240,7 @@ export async function improveFinding(
   findingId: string
 ): Promise<ImproveFindingResult | UploadError> {
   try {
-    const res = await fetch(
+    const res = await authFetch(
       `${API_BASE}/api/findings/${sessionId}/improve/${findingId}`,
       { method: "POST" }
     );
@@ -260,7 +278,7 @@ export async function submitFeedback(
   payload: FeedbackPayload
 ): Promise<{ ok: true } | UploadError> {
   try {
-    const res = await fetch(`${API_BASE}/api/feedback`, {
+    const res = await authFetch(`${API_BASE}/api/feedback`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -283,7 +301,7 @@ export async function detectTestCommands(
   sessionId: string
 ): Promise<{ suggestions: QASuggestion[] } | UploadError> {
   try {
-    const res = await fetch(`${API_BASE}/api/qa/${sessionId}/detect`);
+    const res = await authFetch(`${API_BASE}/api/qa/${sessionId}/detect`);
     const data = await res.json();
     if (!res.ok) {
       return { error: data.detail || `Detection failed (${res.status}).` };
@@ -320,7 +338,7 @@ export async function runQACommand(
   command: string
 ): Promise<QARunResult | UploadError> {
   try {
-    const res = await fetch(`${API_BASE}/api/qa/${sessionId}/run`, {
+    const res = await authFetch(`${API_BASE}/api/qa/${sessionId}/run`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ command }),
@@ -350,7 +368,7 @@ export async function proposeQAFix(
   failure: QAFailure
 ): Promise<QAFixProposal | UploadError> {
   try {
-    const res = await fetch(`${API_BASE}/api/qa/${sessionId}/propose-fix`, {
+    const res = await authFetch(`${API_BASE}/api/qa/${sessionId}/propose-fix`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(failure),
@@ -371,7 +389,7 @@ export async function applyQAFix(
   newContent: string
 ): Promise<{ status: string; file: string; backup: string | null } | UploadError> {
   try {
-    const res = await fetch(`${API_BASE}/api/qa/${sessionId}/apply-fix`, {
+    const res = await authFetch(`${API_BASE}/api/qa/${sessionId}/apply-fix`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ file, new_content: newContent }),

@@ -40,12 +40,6 @@ npm run dev
 Open http://localhost:3000. See `backend/README.md` and
 `frontend/README.md` for more detail on each side.
 
-## Deploying
-
-See [`DEPLOYMENT.md`](./DEPLOYMENT.md) for step-by-step instructions
-to deploy the backend on Render and the frontend on Vercel (both free
-tiers, both connect directly to this GitHub repo).
-
 ## Notes for contributors
 
 - `.env` files are gitignored on purpose \u2014 never commit real API keys.
