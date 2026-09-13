@@ -107,7 +107,7 @@ export default function QAPanel({ sessionId }: { sessionId: string }) {
     setFixError("");
     const res = await proposeQAFix(sessionId, runResult.failure);
     if ("error" in res) {
-      setFixError(res.error);
+      setFixError(res.error ?? "Something went wrong proposing a fix.");
       setFixStatus("error");
       return;
     }
